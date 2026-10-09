@@ -1,0 +1,66 @@
+{
+  "data": {
+    "slice": [
+      42650,
+      46746
+    ],
+    "fs_hz": 610.35,
+    "dt_s": 0.0016384041943147375,
+    "train_samples": 3072,
+    "test_samples": 1024,
+    "u_excerpt_mean_removed_v": 0.006657416356201172,
+    "y_excerpt_mean_removed_v": 0.0013167125861816408,
+    "test_zero_baseline_rms_v": 0.060491800754140145
+  },
+  "physics_teacher": {
+    "a": 40.78871084225977,
+    "b": 184965.19798185665,
+    "c": 751357.9693699611,
+    "g": 193864.01172931763
+  },
+  "initial_velocity": {
+    "method": "second-order forward finite difference",
+    "value_v_per_s": -13.6266741
+  },
+  "trials": [
+    {
+      "name": "relu",
+      "architecture": [
+        3,
+        64,
+        64,
+        32,
+        1
+      ],
+      "activation": "relu",
+      "pretrain_steps": 2000,
+      "rollout_steps": 320,
+      "rollout_horizon": 96,
+      "rollout_batch": 24,
+      "learning_rate": 0.0015,
+      "train_free_run_rmse_v": 0.001065418974014798,
+      "test_free_run_rmse_v": 0.0031116974545403993,
+      "checkpoint": "C:\\Users\\User\\OneDrive\\Desktop\\homework_1\\task6_agentic_system\\runs\\validation_run_5\\results\\relu.pt"
+    }
+  ],
+  "best": {
+    "name": "relu",
+    "architecture": [
+      3,
+      64,
+      64,
+      32,
+      1
+    ],
+    "activation": "relu",
+    "pretrain_steps": 2000,
+    "rollout_steps": 320,
+    "rollout_horizon": 96,
+    "rollout_batch": 24,
+    "learning_rate": 0.0015,
+    "train_free_run_rmse_v": 0.001065418974014798,
+    "test_free_run_rmse_v": 0.0031116974545403993,
+    "checkpoint": "C:\\Users\\User\\OneDrive\\Desktop\\homework_1\\task6_agentic_system\\runs\\validation_run_5\\results\\relu.pt"
+  },
+  "plot": "C:\\Users\\User\\OneDrive\\Desktop\\homework_1\\task6_agentic_system\\runs\\validation_run_5\\results\\best_test_rollout.png"
+}
