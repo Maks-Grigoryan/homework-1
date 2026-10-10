@@ -262,10 +262,6 @@ class CodingTool:
             raise ValueError(f"Unknown profile {profile!r}")
         source = self.repository_root / "task5_pinn" / "train_silverbox_pinn.py"
         program = self.work_dir / "task5_generated.py"
-        # A new, self-contained file is written for this run.  Copying the
-        # validated implementation keeps the executor focused on the latest
-        # scientist-selected architecture instead of silently changing the
-        # differential equation or the free-run metric.
         program.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
         result_dir = self.work_dir / "results"
         command = [
@@ -344,9 +340,6 @@ def build_graph(
         }
 
     def scientist_node(state: GraphState) -> GraphState:
-        # The scientist has no coding tool.  Its role output is deliberately
-        # structured so a small local routing model cannot silently drop a
-        # physical term or leak an invented measurement into the plan.
         answer = """Scientific plan (no measured score is claimed here).
 
 Equation and state:
@@ -403,8 +396,7 @@ reason. Do not claim that code ran; the tool will run it after this choice."""
             if profile not in {"small_tanh", "deep_tanh", "relu"}:
                 raise ValueError("invalid profile")
         except (ValueError, json.JSONDecodeError):
-            # This fallback belongs to the executor, not the orchestrator's
-            # routing logic.  It is the safest available tested architecture.
+            # Safe executor fallback.
             profile = "relu"
         latest_scientist = next(
             turn["text"]
@@ -415,8 +407,7 @@ reason. Do not claim that code ran; the tool will run it after this choice."""
             r"profile\s+`(small_tanh|deep_tanh|relu)`", latest_scientist, re.I
         )
         if planned is not None:
-            # The executor may not silently replace the scientist's latest
-            # architecture.  This is plan conformance, not routing logic.
+            # Follow the scientist's selected architecture.
             profile = planned.group(1).lower()
         tool_result = coding_tool.write_and_run(profile)
         response = (

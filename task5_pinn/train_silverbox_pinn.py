@@ -231,8 +231,7 @@ def train_trial(
     seed_everything(seed)
     torch.set_default_dtype(torch.float64)
 
-    # The teacher is the fitted differential equation.  Only training states
-    # are used; the test y values do not enter this target.
+    # Build targets from training data only.
     a, b, c, g = coefficients
     acceleration_target = (
         -a * velocity[:N_TRAIN]
@@ -264,7 +263,6 @@ def train_trial(
         optimizer, T_max=trial.pretrain_steps, eta_min=trial.learning_rate * 0.05
     )
 
-    # Full-batch physics pretraining makes the vector field smooth and stable.
     for step in range(trial.pretrain_steps):
         optimizer.zero_grad()
         prediction = model(y_t[:N_TRAIN], v_t[:N_TRAIN], u_t[:N_TRAIN])
@@ -281,8 +279,6 @@ def train_trial(
                 f"normalized MSE={loss.item():.8e}"
             )
 
-    # Multishooting fine-tuning.  Every short rollout starts from a measured
-    # training state; this is training only, not the final free-run metric.
     optimizer = torch.optim.Adam(model.parameters(), lr=trial.learning_rate * 0.12)
     max_start = N_TRAIN - trial.rollout_horizon - 1
     for step in range(trial.rollout_steps):
@@ -295,8 +291,6 @@ def train_trial(
             y_state, v_state = rk4_step(
                 model, y_state, v_state, u_t[indices], u_t[indices + 1]
             )
-            # Later steps receive slightly more weight because drift is the
-            # failure mode that matters in a free run.
             weight = 0.5 + 0.5 * (offset + 1) / trial.rollout_horizon
             rollout_loss = rollout_loss + weight * torch.mean(
                 ((y_state - y_t[indices + 1]) / input_scale[0]) ** 2
@@ -312,8 +306,7 @@ def train_trial(
                 f"normalized MSE={rollout_loss.item():.8e}"
             )
 
-    # Required initial condition: measured position and a finite-difference
-    # velocity.  This is the second-order forward difference at sample zero.
+    # Start one continuous free run from the first measured state.
     v0 = float((-3.0 * y[0] + 4.0 * y[1] - y[2]) / (2.0 * DT))
     prediction = free_rollout(model, u_t, float(y[0]), v0)
     train_rmse = float(
@@ -406,10 +399,7 @@ def main() -> None:
     seed_everything(args.seed)
     u, y = load_excerpt(args.csv)
 
-    # A seven-point fourth-order Savitzky-Golay finite-difference filter is
-    # short enough to preserve the approximately 66--70 Hz carrier.
-    # Differentiate the training record by itself.  In particular, the
-    # Savitzky-Golay window at sample 3071 is not allowed to look into test y.
+    # Estimate derivatives without using test outputs.
     velocity = np.zeros_like(y)
     acceleration = np.zeros_like(y)
     velocity[:N_TRAIN] = savgol_filter(
